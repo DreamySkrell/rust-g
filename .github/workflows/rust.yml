@@ -21,7 +21,7 @@ jobs:
         with:
           toolchain: stable
           command: build
-          args: --target i686-pc-windows-msvc --release
+          args: --target i686-pc-windows-msvc --release --features dmi,file,git,hash,log,url,udp_shipper,http
       - uses: actions/upload-artifact@v1
         with:
           name: rust_g.dll
@@ -44,7 +44,7 @@ jobs:
         with:
           toolchain: stable
           command: build
-          args: --target i686-unknown-linux-gnu --release
+          args: --target i686-unknown-linux-gnu --release --features dmi,file,git,hash,log,url,udp_shipper,http
       - uses: actions/upload-artifact@v1
         with:
           name: rust_g
