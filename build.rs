@@ -34,27 +34,4 @@ fn main() {
             }
         }
     }
-
-    // module: udp shipper
-    if enabled!("UDP_SHIPPER") {
-            write!(f, r#"
-#define rustg_udp_shipper_send(addr, text) call(RUST_G, "udp_shipper_send")(addr, text)
-"#).unwrap();
-    }
-
-    // module: http
-    if enabled!("HTTP") {
-        write!(f, r#"
-#define RUSTG_HTTP_METHOD_GET "get"
-#define RUSTG_HTTP_METHOD_PUT "put"
-#define RUSTG_HTTP_METHOD_DELETE "delete"
-#define RUSTG_HTTP_METHOD_PATCH "patch"
-#define RUSTG_HTTP_METHOD_HEAD "head"
-#define RUSTG_HTTP_METHOD_POST "post"
-
-#define rustg_http_request_blocking(method, url, body, headers) call(RUST_G, "http_request_blocking")(method, url, body, headers)
-#define rustg_http_request_async(method, url, body, headers) call(RUST_G, "http_request_async")(method, url, body, headers)
-#define rustg_http_check_request(req_id) call(RUST_G, "http_check_request")(req_id)
-"#).unwrap();
-    }
 }
