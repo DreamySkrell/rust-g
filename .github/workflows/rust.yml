@@ -37,6 +37,7 @@ jobs:
         steps:
             - uses: actions/checkout@v1
             - run: |
+                  sudo apt-get install g++-multilib
                   sudo dpkg --add-architecture i386
                   sudo apt-get update
                   sudo apt-get install g++-multilib zlib1g-dev:i386 libssl-dev:i386 pkg-config:i386
