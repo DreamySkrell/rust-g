@@ -2,6 +2,7 @@
 mod byond;
 #[allow(dead_code)]
 mod error;
+mod jobs;
 
 #[cfg(feature = "jobs")]
 mod jobs;
@@ -36,6 +37,10 @@ pub mod unzip;
 pub mod url;
 #[cfg(feature = "worleynoise")]
 pub mod worleynoise;
+#[cfg(feature="udp_shipper")]
+pub mod udp_shipper;
+#[cfg(feature="http")]
+pub mod http;
 
 #[cfg(not(target_pointer_width = "32"))]
 compile_error!("rust-g must be compiled for a 32-bit target");

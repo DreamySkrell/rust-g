@@ -69,6 +69,20 @@ impl From<Utf8Error> for Error {
     }
 }
 
+#[cfg(feature="http")]
+impl From<reqwest::Error> for Error {
+    fn from(error: reqwest::Error) -> Error {
+        Error::RequestError(error)
+    }
+}
+
+#[cfg(feature="http")]
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Error {
+        Error::SerializationError(error)
+    }
+}
+
 impl From<Error> for String {
     fn from(error: Error) -> String {
         error.to_string()
