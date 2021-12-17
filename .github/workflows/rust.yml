@@ -1,110 +1,93 @@
 name: rust-g
 on:
-    push:
-        branches:
-            - master
-        tags:
-            - "v*"
-    pull_request:
-        branches:
-            - master
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
 jobs:
-    build-windows:
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v1
-            - uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: i686-pc-windows-msvc
-            - uses: actions-rs/cargo@v1
-              with:
-                  toolchain: stable
-                  command: build
-                  args: --target i686-pc-windows-msvc --release
-            - uses: actions/upload-artifact@v1
-              with:
-                  name: rust_g.dll
-                  path: target/i686-pc-windows-msvc/release/rust_g.dll
-            - uses: actions/upload-artifact@v1
-              with:
-                  name: rust_g.dm
-                  path: target/rust_g.dm
-    build-linux:
-        runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: i686-pc-windows-msvc
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: build
+          args: --target i686-pc-windows-msvc --release
+      - uses: actions/upload-artifact@v1
+        with:
+          name: rust_g.dll
+          path: target/i686-pc-windows-msvc/release/rust_g.dll
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+      PKG_CONFIG_ALLOW_CROSS: 1
+    steps:
+      - uses: actions/checkout@v1
+      - run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install g++-multilib zlib1g-dev:i386 libssl-dev:i386 pkg-config:i386
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: i686-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: build
+          args: --target i686-unknown-linux-gnu --release
+      - uses: actions/upload-artifact@v1
+        with:
+          name: rust_g
+          path: target/i686-unknown-linux-gnu/release/librust_g.so
+  deploy:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-windows, build-linux]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
-            PKG_CONFIG_ALLOW_CROSS: 1
-        steps:
-            - uses: actions/checkout@v1
-            - run: |
-                  sudo apt-get install g++-multilib
-                  sudo dpkg --add-architecture i386
-                  sudo apt-get update
-                  sudo apt-get install g++-multilib zlib1g-dev:i386 libssl-dev:i386 pkg-config:i386
-            - uses: actions-rs/toolchain@v1
-              with:
-                  toolchain: stable
-                  target: i686-unknown-linux-gnu
-            - uses: actions-rs/cargo@v1
-              with:
-                  toolchain: stable
-                  command: build
-                  args: --target i686-unknown-linux-gnu --release
-            - uses: actions/upload-artifact@v1
-              with:
-                  name: librust_g.so
-                  path: target/i686-unknown-linux-gnu/release/librust_g.so
-    deploy:
-        name: Create Release
-        runs-on: ubuntu-latest
-        if: startsWith(github.ref, 'refs/tags/v')
-        needs: [build-windows, build-linux]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v2
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: ${{ github.ref }}
-                  draft: false
-                  prerelease: false
-            - uses: actions/download-artifact@v2
-              with:
-                  name: rust_g.dll
-            - name: Upload rust_g.dll
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./rust_g.dll
-                  asset_name: rust_g.dll
-                  asset_content_type: application/octet-stream
-            - uses: actions/download-artifact@v2
-              with:
-                  name: librust_g.so
-            - name: Upload librust_g.so
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./librust_g.so
-                  asset_name: librust_g.so
-                  asset_content_type: application/octet-stream
-            - uses: actions/download-artifact@v2
-              with:
-                  name: rust_g.dm
-            - name: Upload rust_g.dm
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./rust_g.dm
-                  asset_name: rust_g.dm
-                  asset_content_type: text/plain
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - uses: actions/download-artifact@v2
+        with:
+          name: rust_g.dll
+      - name: Upload rust_g.dll
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rust_g.dll
+          asset_name: rust_g.dll
+          asset_content_type: application/octet-stream
+      - uses: actions/download-artifact@v2
+        with:
+          name: rust_g
+      - name: Upload librust_g.so
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./librust_g.so
+          asset_name: librust_g.so
+          asset_content_type: application/octet-stream
