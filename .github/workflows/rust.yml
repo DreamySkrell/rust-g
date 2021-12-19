@@ -49,6 +49,10 @@ jobs:
         with:
           name: rust_g
           path: target/i686-unknown-linux-gnu/release/librust_g.so
+      - uses: actions/upload-artifact@v1
+        with:
+          name: rust_g.dm
+          path: target/rust_g.dm
   deploy:
     name: Create Release
     runs-on: ubuntu-latest
@@ -91,3 +95,15 @@ jobs:
           asset_path: ./librust_g.so
           asset_name: librust_g.so
           asset_content_type: application/octet-stream
+      - uses: actions/download-artifact@v2
+        with:
+          name: rust_g.dm
+      - name: Upload rust_g.dm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rust_g.dm
+          asset_name: rust_g.dm
+          asset_content_type: text/plain
