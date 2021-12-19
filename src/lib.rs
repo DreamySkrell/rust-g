@@ -1,48 +1,43 @@
 #[macro_use]
-extern crate failure;
-
-#[cfg(feature="chrono")]
-extern crate chrono;
-#[cfg(feature="crypto-hash")]
-extern crate crypto_hash;
-#[cfg(feature="git2")]
-extern crate git2;
-#[cfg(feature="hex")]
-extern crate hex;
-#[cfg(feature="percent-encoding")]
-extern crate percent_encoding;
-#[cfg(feature="png")]
-extern crate png;
-#[cfg(feature="http")]
-extern crate reqwest;
-#[cfg(feature="http")]
-#[macro_use]
-extern crate serde_derive;
-#[cfg(feature="http")]
-extern crate serde_json;
-#[cfg(feature="http")]
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
 mod byond;
 #[allow(dead_code)]
 mod error;
+
+#[cfg(feature = "jobs")]
 mod jobs;
 
-#[cfg(feature="dmi")]
+#[cfg(feature = "cellularnoise")]
+pub mod cellularnoise;
+#[cfg(feature = "dmi")]
 pub mod dmi;
-#[cfg(feature="file")]
+#[cfg(feature = "file")]
 pub mod file;
-#[cfg(feature="git")]
+#[cfg(feature = "git")]
 pub mod git;
-#[cfg(feature="hash")]
+#[cfg(feature = "hash")]
 pub mod hash;
-#[cfg(feature="log")]
-pub mod log;
-#[cfg(feature="url")]
-pub mod url;
-#[cfg(feature="udp_shipper")]
-pub mod udp_shipper;
-#[cfg(feature="http")]
+#[cfg(feature = "http")]
 pub mod http;
+#[cfg(feature = "json")]
+pub mod json;
+#[cfg(feature = "log")]
+pub mod log;
+#[cfg(feature = "noise")]
+pub mod noise_gen;
+#[cfg(feature = "sql")]
+pub mod sql;
+#[cfg(feature = "time")]
+pub mod time;
+#[cfg(feature = "toml")]
+pub mod toml;
+#[cfg(feature = "unzip")]
+pub mod unzip;
+#[cfg(feature = "url")]
+pub mod url;
+#[cfg(feature = "worleynoise")]
+pub mod worleynoise;
+#[cfg(feature="udp")]
+pub mod udp;
+
+#[cfg(not(target_pointer_width = "32"))]
+compile_error!("rust-g must be compiled for a 32-bit target");

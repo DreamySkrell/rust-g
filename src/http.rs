@@ -1,41 +1,29 @@
-use std::collections::hash_map::{ HashMap };
-use std::collections::BTreeMap;
+use crate::{error::Result, jobs};
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::io::Write;
 
-use error::Result;
-use jobs;
+// ----------------------------------------------------------------------------
+// Interface
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-const PKG_NAME: &str = env!("CARGO_PKG_NAME");
-
-fn setup_http_client() -> reqwest::Client {
-    use reqwest::{ Client, header::{ HeaderMap, USER_AGENT } };
-    
-    let mut headers = HeaderMap::new();
-    headers.insert(USER_AGENT, format!("{}/{}", PKG_NAME, VERSION).parse().unwrap());
-
-    Client::builder()
-            .default_headers(headers)
-            .build()
-            .unwrap()
-}
-
-lazy_static! {
-    static ref HTTP_CLIENT: reqwest::Client = setup_http_client();
+#[derive(Deserialize)]
+struct RequestOptions {
+    output_filename: Option<String>,
+    body_filename: Option<String>,
 }
 
 #[derive(Serialize)]
-struct Response {
+struct Response<'a> {
     status_code: u16,
-    headers: HashMap<String, String>,
-    body: String
+    headers: HashMap<&'a str, &'a str>,
+    body: Option<&'a str>,
 }
 
 // If the response can be deserialized -> success.
 // If the response can't be deserialized -> failure.
-byond_fn! { http_request_blocking(method, url, body, headers) {
-    let (method, url, body, headers) = sanitize_args(&method, &url, &body, &headers);
-
-    let req = match construct_request(method, url, body, headers) {
+byond_fn! { http_request_blocking(method, url, body, headers, ...rest) {
+    let req = match construct_request(method, url, body, headers, rest.first().map(|x| &**x)) {
         Ok(r) => r,
         Err(e) => return Some(e.to_string())
     };
@@ -47,10 +35,8 @@ byond_fn! { http_request_blocking(method, url, body, headers) {
 } }
 
 // Returns new job-id.
-byond_fn! { http_request_async(method, url, body, headers) {
-    let (method, url, body, headers) = sanitize_args(&method, &url, &body, &headers);
-
-    let req = match construct_request(method, url, body, headers) {
+byond_fn! { http_request_async(method, url, body, headers, ...rest) {
+    let req = match construct_request(method, url, body, headers, rest.first().map(|x| &**x)) {
         Ok(r) => r,
         Err(e) => return Some(e.to_string())
     };
@@ -69,73 +55,104 @@ byond_fn! { http_check_request(id) {
     Some(jobs::check(id))
 } }
 
-fn sanitize_args(method: &str, url: &str, body: &str, headers: &str) -> (String, String, Option<String>, Option<String>) {
-    let method = method.to_string();
-    let url = url.to_string();
+// ----------------------------------------------------------------------------
+// Shared HTTP client state
 
-    let body = body.to_string();
-    let body = if !body.is_empty() {
-        Some(body)
-    } else {
-        None
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+
+fn setup_http_client() -> reqwest::blocking::Client {
+    use reqwest::{
+        blocking::Client,
+        header::{HeaderMap, USER_AGENT},
     };
 
-    let headers = headers.to_string();
-    let headers = if !headers.is_empty() {
-        Some(headers)
-    } else {
-        None
-    };
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        USER_AGENT,
+        format!("{}/{}", PKG_NAME, VERSION).parse().unwrap(),
+    );
 
-    (method, url, body, headers)
+    Client::builder().default_headers(headers).build().unwrap()
 }
 
-fn create_response(response: &mut reqwest::Response) -> Result<Response> {
-    let mut resp = Response {
-        status_code: response.status().as_u16(),
-        headers: HashMap::new(),
-        body: response.text()?
-    };
+pub static HTTP_CLIENT: Lazy<reqwest::blocking::Client> = Lazy::new(setup_http_client);
 
-    for (key, value) in response.headers().iter() {
-        if let Ok(value) = value.to_str() {
-            resp.headers.insert(key.to_string(), value.to_string());
-        }
-    }
+// ----------------------------------------------------------------------------
+// Request construction and execution
 
-    Ok(resp)
+struct RequestPrep {
+    req: reqwest::blocking::RequestBuilder,
+    output_filename: Option<String>,
 }
 
-fn construct_request(method: String, url: String, body: Option<String>, headers: Option<String>) -> Result<reqwest::RequestBuilder> {
-    let mut req = match &method[..] {
-        "post" => HTTP_CLIENT.post(&url),
-        "put" => HTTP_CLIENT.put(&url),
-        "patch" => HTTP_CLIENT.patch(&url),
-        "delete" => HTTP_CLIENT.delete(&url),
-        "head" => HTTP_CLIENT.head(&url),
-        _ => HTTP_CLIENT.get(&url),
+fn construct_request(
+    method: &str,
+    url: &str,
+    body: &str,
+    headers: &str,
+    options: Option<&str>,
+) -> Result<RequestPrep> {
+    let mut req = match method {
+        "post" => HTTP_CLIENT.post(url),
+        "put" => HTTP_CLIENT.put(url),
+        "patch" => HTTP_CLIENT.patch(url),
+        "delete" => HTTP_CLIENT.delete(url),
+        "head" => HTTP_CLIENT.head(url),
+        _ => HTTP_CLIENT.get(url),
     };
 
-    if let Some(body) = body {
-        req = req.body(body);
+    if !body.is_empty() {
+        req = req.body(body.to_owned());
     }
 
-    if let Some(headers) = headers {
-        let headers: BTreeMap<&str, &str> = serde_json::from_str(&headers)?;
+    if !headers.is_empty() {
+        let headers: BTreeMap<&str, &str> = serde_json::from_str(headers)?;
         for (key, value) in headers {
             req = req.header(key, value);
         }
     }
 
-    Ok(req)
+    let mut output_filename = None;
+    if let Some(options) = options {
+        let options: RequestOptions = serde_json::from_str(options)?;
+        output_filename = options.output_filename;
+        if let Some(fname) = options.body_filename {
+            req = req.body(std::fs::File::open(fname)?);
+        }
+    }
+
+    Ok(RequestPrep {
+        req,
+        output_filename,
+    })
 }
 
-fn submit_request(req: reqwest::RequestBuilder) -> Result<String> {
-    let mut response = req.send()?;
+fn submit_request(prep: RequestPrep) -> Result<String> {
+    let mut response = prep.req.send()?;
 
-    let res = create_response(&mut response)?;
+    let body;
+    let mut resp = Response {
+        status_code: response.status().as_u16(),
+        headers: HashMap::new(),
+        body: None,
+    };
 
-    let deserialized = serde_json::to_string(&res)?;
+    let headers = response.headers().clone();
+    for (key, value) in headers.iter() {
+        if let Ok(value) = value.to_str() {
+            resp.headers.insert(key.as_str(), value);
+        }
+    }
 
-    Ok(deserialized)
+    if let Some(output_filename) = prep.output_filename {
+        let mut writer = std::io::BufWriter::new(std::fs::File::create(&output_filename)?);
+        std::io::copy(&mut response, &mut writer)?;
+        writer.flush()?;
+    } else {
+        body = response.text()?;
+        resp.body = Some(&body);
+    }
+
+    Ok(serde_json::to_string(&resp)?)
 }
