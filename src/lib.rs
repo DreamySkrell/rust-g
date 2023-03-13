@@ -40,14 +40,14 @@ pub mod sql;
 pub mod time;
 #[cfg(feature = "toml")]
 pub mod toml;
+#[cfg(feature = "udp")]
+pub mod udp;
 #[cfg(feature = "unzip")]
 pub mod unzip;
 #[cfg(feature = "url")]
 pub mod url;
 #[cfg(feature = "worleynoise")]
 pub mod worleynoise;
-#[cfg(feature="udp")]
-pub mod udp;
 
 #[cfg(not(target_pointer_width = "32"))]
 compile_error!("rust-g must be compiled for a 32-bit target");

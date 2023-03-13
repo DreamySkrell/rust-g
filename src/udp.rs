@@ -1,11 +1,12 @@
-use std::net::UdpSocket;
 use std::cell::RefCell;
+use std::net::UdpSocket;
 
-use crate::error::{Result};
+use crate::error::Result;
 
 fn init_socket() -> UdpSocket {
     let sock = UdpSocket::bind("0.0.0.0:0").expect("Socket init failed.");
-    sock.set_nonblocking(true).expect("Setting socket to non-blocking failed.");
+    sock.set_nonblocking(true)
+        .expect("Setting socket to non-blocking failed.");
     sock
 }
 
