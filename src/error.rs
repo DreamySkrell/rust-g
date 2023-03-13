@@ -34,30 +34,33 @@ pub enum Error {
     #[cfg(feature = "png")]
     #[error(transparent)]
     ImageEncoding(#[from] EncodingError),
+    #[cfg(feature = "http")]
     #[error(transparent)]
-    ParseIntError(#[from] ParseIntError),
+    JsonSerialization(#[from] serde_json::Error),
     #[error(transparent)]
-    ParseFloatError(#[from] ParseFloatError),
+    ParseInt(#[from] ParseIntError),
     #[error(transparent)]
-    GenericImageError(#[from] ImageError),
+    ParseFloat(#[from] ParseFloatError),
+    #[error(transparent)]
+    GenericImage(#[from] ImageError),
     #[cfg(feature = "png")]
     #[error("Invalid png data.")]
-    InvalidPngDataError,
+    InvalidPngData,
     #[cfg(feature = "http")]
     #[error(transparent)]
-    RequestError(#[from] reqwest::Error),
+    Request(#[from] reqwest::Error),
     #[cfg(feature = "toml")]
     #[error(transparent)]
-    TomlDeserializationError(#[from] toml_dep::de::Error),
-    #[cfg(feature = "http")]
+    TomlDeserialization(#[from] toml_dep::de::Error),
+    #[cfg(feature = "toml")]
     #[error(transparent)]
-    SerializationError(#[from] serde_json::Error),
+    TomlSerialization(#[from] toml_dep::ser::Error),
     #[cfg(feature = "unzip")]
     #[error(transparent)]
-    UnzipError(#[from] ZipError),
+    Unzip(#[from] ZipError),
     #[cfg(feature = "hash")]
     #[error("Unable to decode hex value.")]
-    HexDecodeError,
+    HexDecode,
 }
 
 impl From<Utf8Error> for Error {

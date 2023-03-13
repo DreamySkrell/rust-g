@@ -1,3 +1,5 @@
+#![forbid(unsafe_op_in_unsafe_fn)]
+
 #[macro_use]
 mod byond;
 #[allow(dead_code)]
@@ -6,8 +8,12 @@ mod error;
 #[cfg(feature = "jobs")]
 mod jobs;
 
+#[cfg(feature = "acreplace")]
+pub mod acreplace;
 #[cfg(feature = "cellularnoise")]
 pub mod cellularnoise;
+#[cfg(feature = "dbpnoise")]
+pub mod dbpnoise;
 #[cfg(feature = "dmi")]
 pub mod dmi;
 #[cfg(feature = "file")]
@@ -24,6 +30,10 @@ pub mod json;
 pub mod log;
 #[cfg(feature = "noise")]
 pub mod noise_gen;
+#[cfg(feature = "pathfinder")]
+pub mod pathfinder;
+#[cfg(feature = "redis_pubsub")]
+pub mod redis_pubsub;
 #[cfg(feature = "sql")]
 pub mod sql;
 #[cfg(feature = "time")]

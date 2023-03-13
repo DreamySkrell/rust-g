@@ -13,11 +13,11 @@ thread_local! {
     static UDP_LOCAL: RefCell<UdpSocket> = RefCell::new(init_socket());
 }
 
-byond_fn! { udp_send(addr, data) {
+byond_fn!(fn udp_send(addr, data) {
     UDP_LOCAL.with(|cell| -> Result<()> {
         let sock = cell.borrow_mut();
         sock.send_to(data.as_bytes(), addr.to_string())?;
 
         Ok(())
     }).err()
-} }
+} );

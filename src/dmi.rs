@@ -1,19 +1,19 @@
 use crate::error::{Error, Result};
-use png::{Decoder, Encoder, OutputInfo};
+use png::{Decoder, Encoder, OutputInfo, Reader};
 use std::{
     fs::{create_dir_all, File},
     path::Path,
 };
 
-byond_fn! { dmi_strip_metadata(path) {
+byond_fn!(fn dmi_strip_metadata(path) {
     strip_metadata(path).err()
-} }
+});
 
-byond_fn! { dmi_create_png(path, width, height, data) {
+byond_fn!(fn dmi_create_png(path, width, height, data) {
     create_png(path, width, height, data).err()
-} }
+});
 
-byond_fn! { dmi_resize_png(path, width, height, resizetype) {
+byond_fn!(fn dmi_resize_png(path, width, height, resizetype) {
     let resizetype = match resizetype {
         "catmull" => image::imageops::CatmullRom,
         "gaussian" => image::imageops::Gaussian,
@@ -23,27 +23,44 @@ byond_fn! { dmi_resize_png(path, width, height, resizetype) {
         _ => image::imageops::Nearest,
     };
     resize_png(path, width, height, resizetype).err()
-} }
+});
 
 fn strip_metadata(path: &str) -> Result<()> {
-    let (info, image) = read_png(path)?;
-    Ok(write_png(path, info, image)?)
+    let (reader, frame_info, image) = read_png(path)?;
+    write_png(path, reader, frame_info, image, true)
 }
 
-fn read_png(path: &str) -> Result<(OutputInfo, Vec<u8>)> {
-    let (info, mut reader) = Decoder::new(File::open(path)?).read_info()?;
-    let mut buf = vec![0; info.buffer_size()];
+fn read_png(path: &str) -> Result<(Reader<File>, OutputInfo, Vec<u8>)> {
+    let mut reader = Decoder::new(File::open(path)?).read_info()?;
+    let mut buf = vec![0; reader.output_buffer_size()];
+    let frame_info = reader.next_frame(&mut buf)?;
 
-    reader.next_frame(&mut buf)?;
-    Ok((info, buf))
+    Ok((reader, frame_info, buf))
 }
 
-fn write_png(path: &str, info: OutputInfo, image: Vec<u8>) -> Result<()> {
+fn write_png(
+    path: &str,
+    reader: Reader<File>,
+    info: OutputInfo,
+    image: Vec<u8>,
+    strip: bool,
+) -> Result<()> {
     let mut encoder = Encoder::new(File::create(path)?, info.width, info.height);
     encoder.set_color(info.color_type);
     encoder.set_depth(info.bit_depth);
 
+    let reader_info = reader.info();
+    if let Some(palette) = reader_info.palette.to_owned() {
+        encoder.set_palette(palette);
+    }
+
     let mut writer = encoder.write_header()?;
+    // Handles zTxt chunk copying from the original image if we /don't/ want to strip it
+    if !strip {
+        for chunk in &reader_info.compressed_latin1_text {
+            writer.write_text_chunk(chunk)?;
+        }
+    }
     Ok(writer.write_image_data(&image)?)
 }
 
@@ -53,7 +70,7 @@ fn create_png(path: &str, width: &str, height: &str, data: &str) -> Result<()> {
 
     let bytes = data.as_bytes();
     if bytes.len() % 7 != 0 {
-        return Err(Error::InvalidPngDataError);
+        return Err(Error::InvalidPngData);
     }
 
     let mut result: Vec<u8> = Vec::new();
@@ -70,7 +87,7 @@ fn create_png(path: &str, width: &str, height: &str, data: &str) -> Result<()> {
     }
 
     let mut encoder = Encoder::new(File::create(path)?, width, height);
-    encoder.set_color(png::ColorType::RGB);
+    encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
     Ok(writer.write_image_data(&result)?)
