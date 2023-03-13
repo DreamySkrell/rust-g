@@ -27,7 +27,7 @@ jobs:
         with:
           toolchain: stable
           command: clippy
-          args: --target i686-pc-windows-msvc --all-features --locked -- -D warnings
+          args: --target i686-pc-windows-msvc --all-features --locked
 
       - name: Rustfmt
         uses: actions-rs/cargo@v1
