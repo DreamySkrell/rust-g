@@ -1,4 +1,4 @@
-use noise::{NoiseFn, Perlin, Seedable};
+use noise::{NoiseFn, Perlin};
 use std::{
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
@@ -10,9 +10,9 @@ thread_local! {
     static GENERATORS: RefCell<HashMap<String,  Perlin>> = RefCell::new(HashMap::new());
 }
 
-byond_fn! { noise_get_at_coordinates(seed, x, y) {
+byond_fn!(fn noise_get_at_coordinates(seed, x, y) {
     get_at_coordinates(seed, x, y).ok()
-} }
+});
 
 //note that this will be 0 at integer x & y, scaling is left up to the caller
 fn get_at_coordinates(seed_as_str: &str, x_as_str: &str, y_as_str: &str) -> Result<String> {
@@ -25,7 +25,7 @@ fn get_at_coordinates(seed_as_str: &str, x_as_str: &str, y_as_str: &str) -> Resu
             Entry::Occupied(ref mut occ) => occ.get_mut(),
             Entry::Vacant(vac) => {
                 let seed = seed_as_str.parse::<u32>()?;
-                let perlin = Perlin::new().set_seed(seed);
+                let perlin = Perlin::new(seed);
                 vac.insert(perlin)
             }
         };
