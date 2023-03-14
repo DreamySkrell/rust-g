@@ -108,7 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rust_g.dll
+          asset_path: target/i686-pc-windows-msvc/release/rust_g.dll
           asset_name: rust_g.dll
           asset_content_type: application/octet-stream
       - uses: actions/download-artifact@v2
