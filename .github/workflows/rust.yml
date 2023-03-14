@@ -55,6 +55,8 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     env:
+      BYOND_MAJOR: 515
+      BYOND_MINOR: 1602
       PKG_CONFIG_ALLOW_CROSS: 1
 
     steps:
@@ -63,11 +65,40 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y g++-multilib zlib1g-dev:i386 libssl-dev:i386
+          ./scripts/install_byond.sh
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: i686-unknown-linux-gnu
-      - uses: actions-rs/cargo@v1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check (all features)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: check
+          args: --target i686-unknown-linux-gnu --all-features
+
+      - name: Build (Debug) (all features)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: build
+          args: --target i686-unknown-linux-gnu --all-features
+
+      - name: Run tests (all features)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: test
+          args: --target i686-unknown-linux-gnu --all-features
+        env:
+          BYOND_BIN: /home/runner/BYOND/byond/bin
+
+      - name: Build (release) (default features)
+        uses: actions-rs/cargo@v1
         with:
           toolchain: stable
           command: build
@@ -75,12 +106,11 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: rust_g
-          path: target/i686-unknown-linux-gnu/release/librust_g.so
-      - uses: actions/upload-artifact@v1
-        with:
-          name: rust_g.dm
-          path: target/rust_g.dm
+          name: Linux Build
+          path: |
+            target/i686-unknown-linux-gnu/release/librust_g.so
+            target/rust_g.dm
+
   deploy:
     name: Create Release
     runs-on: ubuntu-latest
@@ -101,31 +131,34 @@ jobs:
           prerelease: false
       - uses: actions/download-artifact@v2
         with:
-          name: rust_g.dll
-      - name: Upload rust_g.dll
+          name: Windows Build
+      - name: Upload rust_g.dll (Windows)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rust_g.dll
+          asset_path: ./i686-pc-windows-msvc/release/rust_g.dll
           asset_name: rust_g.dll
           asset_content_type: application/octet-stream
       - uses: actions/download-artifact@v2
         with:
-          name: rust_g
-      - name: Upload librust_g.so
+          name: Linux Build
+
+      - name: Upload librust_g.so (Linux)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./librust_g.so
+          asset_path: ./i686-unknown-linux-gnu/release/librust_g.so
           asset_name: librust_g.so
           asset_content_type: application/octet-stream
+
       - uses: actions/download-artifact@v2
         with:
-          name: rust_g.dm
+          name: Windows Build
+
       - name: Upload rust_g.dm
         uses: actions/upload-release-asset@v1
         env:
