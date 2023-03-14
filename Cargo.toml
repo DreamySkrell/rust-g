@@ -90,8 +90,8 @@ log = ["chrono"]
 sql = ["mysql", "serde", "serde_json", "once_cell", "dashmap", "jobs"]
 time = []
 toml = ["serde", "serde_json", "toml-dep"]
-url = ["url-dep", "percent-encoding"]
 udp = []
+url = ["url-dep", "percent-encoding"]
 
 # additional features
 batchnoise = ["dbpnoise"]
