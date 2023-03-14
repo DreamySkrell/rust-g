@@ -101,20 +101,20 @@ jobs:
           prerelease: false
       - uses: actions/download-artifact@v2
         with:
-          name: rust_g.dll
-      - name: Upload rust_g.dll
+          name: Windows Build
+      - name: Upload rust_g.dll (Windows)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/i686-pc-windows-msvc/release/rust_g.dll
+          asset_path: ./rust_g.dll
           asset_name: rust_g.dll
           asset_content_type: application/octet-stream
       - uses: actions/download-artifact@v2
         with:
           name: rust_g
-      - name: Upload librust_g.so
+      - name: Upload librust_g.so (Linux)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
