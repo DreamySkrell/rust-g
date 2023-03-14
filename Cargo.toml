@@ -64,6 +64,8 @@ default = [
     "dmi",
     "file",
     "git",
+# Not included by default, but we use it
+    "hash",
     "http",
     "json",
     "log",
@@ -71,10 +73,9 @@ default = [
     "sql",
     "time",
     "toml",
-    "url",
-# Aurora special nowflake modules, because of course we have one
+# Aurora special nowflake module, because of course we have one
     "udp",
-    "hash",
+    "url",
 ]
 
 # default features
