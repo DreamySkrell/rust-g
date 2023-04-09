@@ -1,9 +1,9 @@
 use fast_poisson::Poisson2D;
 use noise::{NoiseFn, Perlin};
 use std::{
-    fmt::Write,
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
+    fmt::Write,
 };
 
 use crate::error::Result;
@@ -20,13 +20,21 @@ byond_fn!(fn generate_poisson_sample(seed, x, y, r) {
     get_poisson_sample(seed, x, y, r).ok()
 });
 
-fn get_poisson_sample(seed_as_str: &str, x_as_str: &str, y_as_str: &str, radius_as_str: &str) -> Result<String> {
+fn get_poisson_sample(
+    seed_as_str: &str,
+    x_as_str: &str,
+    y_as_str: &str,
+    radius_as_str: &str,
+) -> Result<String> {
     let x = x_as_str.parse::<f64>()?;
     let y = y_as_str.parse::<f64>()?;
     let r = radius_as_str.parse::<f64>()?;
     let seed = seed_as_str.parse::<u64>()?;
 
-    let points = Poisson2D::new().with_dimensions([x, y], r).with_seed(seed).iter();
+    let points = Poisson2D::new()
+        .with_dimensions([x, y], r)
+        .with_seed(seed)
+        .iter();
     let mut pointmap = vec![vec![0usize; y as usize]; x as usize];
     let mut output = String::new();
 

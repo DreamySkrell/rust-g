@@ -63,6 +63,8 @@ default = [
     "acreplace",
 # Aurora special snowflake noise gen
     "auroranoise",
+# Not default either but we need it
+    "batchnoise",
     "cellularnoise",
     "dmi",
     "file",
