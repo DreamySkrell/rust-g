@@ -129,6 +129,7 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
+          
       - uses: actions/download-artifact@v2
         with:
           name: Windows Build
@@ -141,10 +142,19 @@ jobs:
           asset_path: ./i686-pc-windows-msvc/release/rust_g.dll
           asset_name: rust_g.dll
           asset_content_type: application/octet-stream
+      - name: Upload rust_g.pdb (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./i686-pc-windows-msvc/release/rust_g.pdb
+          asset_name: rust_g.pdb
+          asset_content_type: application/octet-stream     
+          
       - uses: actions/download-artifact@v2
         with:
           name: Linux Build
-
       - name: Upload librust_g.so (Linux)
         uses: actions/upload-release-asset@v1
         env:
@@ -158,7 +168,6 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Windows Build
-
       - name: Upload rust_g.dm
         uses: actions/upload-release-asset@v1
         env:
