@@ -31,7 +31,7 @@ byond_fn!(fn file_seek_line(path, line) {
     })
 });
 
-fn read(path: &str) -> Result<String> {
+pub fn read(path: &str) -> Result<String> {
     let file = File::open(path)?;
     let metadata = file.metadata()?;
     let mut file = BufReader::new(file);
@@ -43,7 +43,7 @@ fn read(path: &str) -> Result<String> {
     Ok(content)
 }
 
-fn exists(path: &str) -> String {
+pub fn exists(path: &str) -> String {
     let path = std::path::Path::new(path);
     path.exists().to_string()
 }

@@ -34,7 +34,9 @@ hex = { version = "0.4", optional = true }
 percent-encoding = { version = "2.1", optional = true }
 url-dep = { version = "2.1", package = "url", optional = true }
 png = { version = "0.17", optional = true }
-image = { version = "0.24", optional = true, default-features = false, features = ["png"] }
+image = { version = "0.24", optional = true, default-features = false, features = [
+    "png",
+] }
 git2 = { version = "0.14", optional = true, default-features = false }
 noise = { version = "0.8", optional = true }
 redis = { version = "0.21", optional = true }
@@ -57,19 +59,20 @@ dbpnoise = { version = "0.1.2", optional = true }
 pathfinding = { version = "3.0.13", optional = true }
 num = { version = "0.4.0", optional = true }
 fast_poisson = { version = "0.5.2", optional = true }
+dmm_parser_rs = { git = "https://github.com/DreamySkrell/dmm_parser_rs", optional = true }
 
 [features]
 default = [
     "acreplace",
-# Aurora special snowflake noise gen
+    # Aurora special snowflake noise gen
     "auroranoise",
-# Not default either but we need it
+    # Not default either but we need it
     "batchnoise",
     "cellularnoise",
     "dmi",
     "file",
     "git",
-# Not included by default, but we use it
+    # Not included by default, but we use it
     "hash",
     "http",
     "json",
@@ -78,9 +81,10 @@ default = [
     "sql",
     "time",
     "toml",
-# Aurora special nowflake module, because of course we have one
+    # Aurora special nowflake module, because of course we have one
     "udp",
     "url",
+    "mapmanip",
 ]
 
 # default features
@@ -98,6 +102,7 @@ time = []
 toml = ["serde", "serde_json", "toml-dep"]
 udp = []
 url = ["url-dep", "percent-encoding"]
+mapmanip = ["dmm_parser_rs", "file"]
 
 # additional features
 batchnoise = ["dbpnoise"]
