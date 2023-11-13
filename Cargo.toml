@@ -59,7 +59,7 @@ dbpnoise = { version = "0.1.2", optional = true }
 pathfinding = { version = "3.0.13", optional = true }
 num = { version = "0.4.0", optional = true }
 fast_poisson = { version = "0.5.2", optional = true }
-dmm_parser_rs = { git = "https://github.com/DreamySkrell/dmm_parser_rs", optional = true }
+dmm_parser_rs = { git = "https://github.com/DreamySkrell/dmm_parser_rs", rev = "da131600f820a1c0b451eb39ef2488619302cac5", optional = true }
 
 [features]
 default = [
@@ -102,7 +102,7 @@ time = []
 toml = ["serde", "serde_json", "toml-dep"]
 udp = []
 url = ["url-dep", "percent-encoding"]
-mapmanip = ["dmm_parser_rs", "file"]
+mapmanip = ["dmm_parser_rs", "file", "toml-dep", "rand"]
 
 # additional features
 batchnoise = ["dbpnoise"]
