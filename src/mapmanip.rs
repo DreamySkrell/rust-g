@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::error::Result;
 use rand::seq::SliceRandom;
 
@@ -5,6 +7,7 @@ byond_fn!(fn mapmanip_load_map(path_dmm) {
     load_map_guard(path_dmm).ok()
 });
 
+/// Try to do the manipulations, but if they fail, just read the map and do nothing else.
 fn load_map_guard(path_dmm: &str) -> Result<String> {
     let path_config = path_dmm.replace(".dmm", ".toml");
 
@@ -17,26 +20,22 @@ fn load_map_guard(path_dmm: &str) -> Result<String> {
 }
 
 fn load_map(path_dmm: &str, path_config: &str) -> Result<String> {
-    let dmm_raw = crate::file::read(path_dmm)?;
     let _config_raw = crate::file::read(path_config)?;
 
-    let dmm_parsed = dmm_parser_rs::dmmr::parse(&dmm_raw);
+    let mut map = dmm_parser_rs::GridMap::from_file(Path::new(path_dmm))
+        .ok_or(crate::error::Error::HexDecode)?;
 
-    let mut dmm_unpacked = dmm_parser_rs::dmmr::unpack(&dmm_parsed);
-
-    let src_coord = [(60, 40), (65, 40), (70, 40), (60, 35), (65, 35), (70, 35)]
+    let xtr_coord = [(60, 40), (65, 40), (70, 40), (60, 35), (65, 35), (70, 35)]
+        .map(|a| dmm_parser_rs::dmmtools::dmm::Coord2::new(a.0, a.1))
         .choose(&mut rand::thread_rng())
         .unwrap()
         .clone();
-    let src_coord = (src_coord.0 - 1, src_coord.1 - 1);
-    let dst_coord = (65 - 1, 45 - 1);
-    let size = (4, 4);
+    let xtr_size = dmm_parser_rs::dmmtools::dmm::Coord2::new(4, 4);
+    let dst_coord = dmm_parser_rs::dmmtools::dmm::Coord2::new(65, 45);
 
-    let extracted =
-        dmm_parser_rs::copypaste::extract(&dmm_unpacked, (src_coord).into(), size.into());
-    dmm_parser_rs::copypaste::insert(&extracted, &mut dmm_unpacked, dst_coord.into());
+    let xtr_map = dmm_parser_rs::tools::extract_sub_map(&map, xtr_coord, xtr_size);
+    dmm_parser_rs::tools::insert_sub_map(&xtr_map, dst_coord, &mut map);
 
-    let dmm_parsed = dmm_parser_rs::dmmr::pack(&dmm_unpacked);
-
-    Ok(dmm_parser_rs::dmmr::print(&dmm_parsed))
+    dmm_parser_rs::core::map_to_string(&dmm_parser_rs::core::to_dict_map(&map))
+        .ok_or(crate::error::Error::HexDecode)
 }
