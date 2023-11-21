@@ -64,7 +64,7 @@ jobs:
       - run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y g++-multilib zlib1g-dev:i386 libssl-dev:i386
+          sudo apt-get install -y libgcc-s1:i386 g++-multilib zlib1g-dev:i386 libssl-dev:i386
           ./scripts/install_byond.sh
 
       - uses: actions-rs/toolchain@v1
@@ -129,7 +129,7 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
-          
+
       - uses: actions/download-artifact@v2
         with:
           name: Windows Build
@@ -150,8 +150,8 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./i686-pc-windows-msvc/release/rust_g.pdb
           asset_name: rust_g.pdb
-          asset_content_type: application/octet-stream     
-          
+          asset_content_type: application/octet-stream
+
       - uses: actions/download-artifact@v2
         with:
           name: Linux Build
