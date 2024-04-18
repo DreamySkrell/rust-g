@@ -63,6 +63,7 @@ dbpnoise = { version = "0.1.2", optional = true }
 pathfinding = { version = "4.9", optional = true }
 num-integer = { version = "0.1.46", optional = true }
 dmi = { version = "0.3.5", optional = true }
+fast_poisson = { version = "0.5.2", optional = true }
 
 [features]
 default = [
@@ -166,7 +167,3 @@ jobs = ["flume"]
 
 [dev-dependencies]
 regex = "1"
-
-[patch.crates-io.funty]
-git = "https://github.com/ferrilab/funty.git"
-rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446"
